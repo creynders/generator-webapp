@@ -4,7 +4,7 @@ var path = require('path');
 var spawn = require('child_process').spawn;
 var yeoman = require('yeoman-generator');
 var chalk = require('chalk');
-
+var generateConfigs = require('grunt-generate-configs');
 
 var AppGenerator = module.exports = function Appgenerator(args, options, config) {
   yeoman.generators.Base.apply(this, arguments);
@@ -12,6 +12,7 @@ var AppGenerator = module.exports = function Appgenerator(args, options, config)
   // setup the test-framework property, Gruntfile template will need this
   this.testFramework = options['test-framework'] || 'mocha';
   this.coffee = options.coffee;
+  this.splitConfigs = options['split-configs'];
 
   // for hooks to resolve on mocha by default
   options['test-framework'] = this.testFramework;
@@ -78,7 +79,17 @@ AppGenerator.prototype.askFor = function askFor() {
 };
 
 AppGenerator.prototype.gruntfile = function gruntfile() {
+  var config = this.read('_config.js', 'utf8');
+  this.config = this.engine(config, this);
   this.template('Gruntfile.js');
+  if(this.splitConfigs){
+    if(this.coffee && true === this.splitConfigs){
+      this.splitConfigs = 'coffee';
+    }
+    generateConfigs(this.config, this.splitConfigs).forEach(function(filename){
+      console.log('Generated: ' + filename);
+    });
+  }
 };
 
 AppGenerator.prototype.packageJSON = function packageJSON() {
